@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>{% block title %} SARS-CoV-2 Ribosome Profiling Portal {% endblock %}</h1>
+
+    <p> User Friendly Access Point for SARS-CoV-2 Ribo-Seq data on <a href='https://gwips.ucc.ie/cgi-bin/hgGateway'>GWIPS-Viz</a> and <a href="http://trips.ucc.ie/">TRIPS-Viz</a></p>
+    <hr>
+
+    <h2 id="about"> About </h2>
+    <p> This paragraph will essentially be an introduction to the interest in translational regulation wrt to SARScov2</p>
+
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In eget augue justo. Nulla interdum cursus eros ac porttitor. Fusce cursus porta eros. Aliquam imperdiet, felis vel aliquet cursus, arcu velit tempor sapien, vel rhoncus sapien odio sed mauris. Donec luctus pharetra consequat. Fusce molestie metus sit amet neque sollicitudin, at eleifend lorem bibendum. Etiam ut turpis ligula. Ut vitae pulvinar felis. Nullam quis blandit magna, a dictum quam. Vivamus at tristique mauris. Nulla eget nibh augue. Aliquam consectetur urna nec ligula fermentum ullamcorper.</p>
+
+    <p>Pellentesque euismod dolor vitae nunc porttitor dictum. In enim velit, tempor sit amet sagittis nec, vestibulum tincidunt eros. Vivamus nec mauris sit amet ante condimentum vehicula in ut purus. Donec et mauris ultrices, congue nunc ac, pulvinar felis. Nullam id interdum mauris. Vestibulum sed euismod neque, et rutrum quam. Donec ullamcorper gravida tellus, in rhoncus augue vehicula sed. Aliquam tristique a odio a bibendum. Etiam quis tellus mattis, aliquet dui mattis, fermentum elit. In semper lorem non orci vehicula dictum. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nulla condimentum, diam eget iaculis eleifend, arcu purus pulvinar quam, nec faucibus diam felis et neque. Nulla at feugiat mauris, et vestibulum quam. Fusce eros quam, ultricies sed lacinia sodales, lobortis non justo. Donec quis ipsum nec odio aliquam pretium eu vel urna. Pellentesque accumsan sem vitae tellus efficitur, nec consequat diam accumsan. </p>
+
+    <hr>
+
+    <h2 id='studies'>Studies</h2>
+
+    <div role="tabpanel">
+
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation" class="active"><a data-toggle="tab" href="#home_tab" >Home </a></li>
+            {% for study in studies %}
+                <li role="presentation" class="inactive"><a href=#{{ study['study_id'] }} aria-controls={{ study['study_id'] }} role="tab" data-toggle="tab">{{ study['known_as'] }}</a></li>
+            {% endfor %}
+        </ul>
+        <!-- <ul class="nav nav-tabs">
+            <li class="active"><a href="#">Finkel et al.</a></li>
+            <li><a href="#">Puray-Chavez et al.</a></li>
+          </ul> -->
+        <!-- Tab panes -->
+    <div class="tab-content">
+
+        <div role="tabpanel" class="tab-pane fade in active" id="home_tab">
+
+            <p> Each tab contains information on each of the published studies that have released ribosome profiling data from SARS-CoV-2 infected cells</p>
+
+        </div>
+
+
+        {% for study in studies %}
+            <div role="tabpanel" class="tab-pane fade" id="{{ study['study_id'] }}">
+                <h2> {{ study['title'] }}</h2>
+                <p> {{ study['authors'] }}</p>
+                <p> {{ study['release_date'] }} | {{ study['journal'] }} | DOI: <a href="https://doi.org/{{ study['doi'] }}"> {{ study['doi'] }} </a> </p>
+                <p> {{ study['abstract'] }}</p>
+            </div>
+        {% endfor %}
+
+
+    </div>
+    <hr>
+    <section id='filter'>
+        <div id="accordion">
+            <div class="card">
+                <div class="card-header" id="headingOne">
+                <h5 class="mb-0">
+                    <a class="card-link" data-toggle="collapse" href="#collapseOne">
+                        Information on Filtering
+                    </a>
+                </h5>
+                </div>
+                <div id="collapseOne" class="collapse show" data-parent="#accordion">
+                <div class="card-body">
+                    Below are a selection of checkboxes categorised by various conditions. Checking the boxes will facilitate the construction of links to the relevant plots on GWIPS-Viz and TRIPS-Viz. Check as many as you like!
+                </div>
+                </div>
+            </div>
+
+
+            {% for condition in conditions_keys %}
+
+                <div class="card">
+                <div class="card-header" id="{{ 'collapse' ~ condition }}">
+                    <h5 class="mb-0">
+                    <a class="collapsed card-link" data-toggle="collapse" href="#{{ 'collapse' ~ condition }}">
+                        {{ condition_info[condition]['alias'] }}
+                    </a>
+                    </h5>
+                </div>
+
+                <div id="{{ 'collapse' ~ condition }}" class="collapse" data-parent="#accordion">
+                    {% for value in conditions[condition]|sort(attribute=value) %}
+
+                        <div class="card-body">
+                            {% if condition_info[condition]['value_suffix'] and value   %}
+                                <label><input type="checkbox" value="">   {{ value }}{{ condition_info[condition]['value_suffix']}}  </label>
+                            {% else %}
+                                <label><input type="checkbox" value="">   {{ value }}   </label>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                </div>
+
+            {% endfor %}
+
+        </div>
+    </section>
+    {% endblock %}
