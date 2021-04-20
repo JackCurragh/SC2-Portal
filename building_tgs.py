@@ -24,6 +24,7 @@ class Transcript_graph(object):
                     edges.append((edge, vertex))
         return edges 
 
+
     def add_vertex(self, vertex, edges=[]):
         if vertex not in self.graph:
             if edges != []:
@@ -31,6 +32,7 @@ class Transcript_graph(object):
 
             else:
                 self.graph[vertex] = {"out":[], "in":[]}
+
 
     def add_edge(self, outward, inward):
         if (outward in self.graph) and (inward in self.graph):

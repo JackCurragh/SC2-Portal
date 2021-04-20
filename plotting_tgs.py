@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 
 
@@ -220,6 +223,7 @@ def plot_transcript_graph(length, junctions, ORFs):
     print(coding_heights)
     print(used_space)
 
+    print(features)
     for region in features['non-coding']:
         if region[1] == 1:
             non_coding = plt.Rectangle((region[0][0], -3), region[0][1]- region[0][0], 2, fc='k')
@@ -227,7 +231,6 @@ def plot_transcript_graph(length, junctions, ORFs):
             non_coding = plt.Rectangle((region[0][0]-1, 1), region[0][1]- region[0][0]+2, 2, fc='k')
         
         plt.gca().add_patch(non_coding)
-
 ############ ADD EXON JUNCTIONS ##################################
     for junction in junctions:
         plt.plot([junction, junction], [-feature_units/2,feature_units/2], 'k--', label='line 1', linewidth=2)
