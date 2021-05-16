@@ -3,6 +3,15 @@ import pandas as pd
 import sys
 
 connection = sqlite3.connect("database.db")
+with open("/home/jack/trips_sqlite_output.txt", "r") as f:
+    file = f.readlines()
+    trips_id_dict = {}
+    for line in file:
+        l = line.split(",")
+        l[-1] = l[-1].strip()
+        trips_id_dict[l[1]] = l[0]
+    print(trips_id_dict)
+
 
 info_df = pd.read_csv(sys.argv[1])
 
@@ -13,8 +22,13 @@ cur = connection.cursor()
 
 # df is constructed to have all relevant info ready so each row is used to populate a table entry
 for i in range(len(info_df)):
+    try:
+        trips_id = trips_id_dict[info_df["Run"][i]]
+    except:
+        trips_id = 0
+    print(info_df["host_cell"][i])
     cur.execute(
-        "INSERT INTO conditions (sra_run, seq_type, hpi, moi, host_cell, treatment, elongating, initiating, study, sars_vs_mock) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO conditions (sra_run, seq_type, hpi, moi, host_cell, treatment, elongating, initiating, study, sars_vs_mock, trips_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             info_df["Run"][i],
             info_df["seq_type"][i],
@@ -26,6 +40,7 @@ for i in range(len(info_df)):
             bool(info_df["initiating"][i]),
             info_df["study"][i],
             "sars",
+            trips_id,
         ),
     )
 
@@ -45,13 +60,14 @@ for i in range(len(chavez["filename"]) - 1):
     sars_mock = tokens[2]
     treatment = tokens[1]
     host_cell = tokens[0]
+    trips_id = trips_id_dict[sra_run]
     study = "Puray-Chavez et al"
     if hpi == 0:
         hpi = None
     if host_cell == "human":
-        host_cell = "Primary human bronchial epithelial cells"
+        host_cell = "Primary Human Bronchial Epithelial Cells"
     if host_cell == "vero":
-        host_cell = "VeroE6"
+        host_cell = "Vero E6"
     if seq_type == "rna":
         treatment = None
     if seq_type in ["harr", "ltm"]:
@@ -61,7 +77,7 @@ for i in range(len(chavez["filename"]) - 1):
         initiating = 0
         elongating = 1
     cur.execute(
-        "INSERT INTO conditions (sra_run, seq_type, hpi, moi, host_cell, treatment, elongating, initiating, study, sars_vs_mock) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO conditions (sra_run, seq_type, hpi, moi, host_cell, treatment, elongating, initiating, study, sars_vs_mock, trips_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             sra_run,
             seq_type,
@@ -73,6 +89,7 @@ for i in range(len(chavez["filename"]) - 1):
             bool(initiating),
             study,
             sars_mock,
+            trips_id,
         ),
     )
 

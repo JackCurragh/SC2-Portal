@@ -1,32 +1,43 @@
-from flask import Flask, render_template, request, url_for, flash, redirect
+from flask import (
+    Flask,
+    render_template,
+    request,
+    url_for,
+    flash,
+    redirect,
+    render_template_string,
+)
 import sqlite3
 from werkzeug.exceptions import abort
-import mpld3
-import matplotlib as plt
 
-import io
-import base64
+from plotting_tgs import plot_transcript_graph
+from GTF_to_TG import construct_graph_from_file
 
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
+fasta_path = "/home/jack/sarscov2_processing/references/sarscov2_genome.fasta"
+gtf_path = "/home/jack/sarscov2_processing/references/sarscov2.gtf"
 
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "aaabbbbaaabbbb"
 
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def index():
     # service home page of the portal
     conn = get_db_connection()
     studies = conn.execute("SELECT * FROM study_info").fetchall()
     conditions = list_conditions(conn)
-    formatted_conditions = format_conditions(conn, conditions)
-
+    formatted_conditions, before_after = format_conditions(conn, conditions)
     condition_info = get_condition_info(conn)
     formatted_condition_info = format_conditions_info(condition_info)
     condition_keys = sort_condition_keys(condition_info)
-
+    url = " "
+    if request.method == "POST":
+        form_list = request.form.getlist("hello")
+        input_dict = parse_form_result(form_list, before_after, formatted_conditions)
+        query = construct_query_string(input_dict)
+        trips_id = run_query(query, conn)
+        url = build_trips_url(trips_id)
     conn.close()
 
     return render_template(
@@ -35,38 +46,30 @@ def index():
         conditions=formatted_conditions,
         conditions_keys=condition_keys,
         condition_info=formatted_condition_info,
+        url=url,
     )
 
 
 @app.route("/query", methods=["GET", "POST"])
 def query():
-    fig, ax = plt.pyplot.subplots()
-    ax.plot([1, 2, 3], [2, 4, 6])
-    x = mpld3.fig_to_html(fig)
-    return x
+    shape_string = construct_graph_from_file(gtf_path, fasta_path)
+    return render_template("transcriptGraph.html", shapes=shape_string)
 
 
-@app.route("/image", methods=["GET", "POST"])
+@app.route("/test", methods=["GET", "POST"])
 def plotView():
+    conn = get_db_connection()
+    results = conn.execute("select * from conditions").fetchall()
+    studys = {}
+    for i in results:
+        if i["study"] not in studys:
+            studys[i["study"]] = [i["sra_run"]]
+        else:
+            studys[i["study"]].append(i["sra_run"])
 
-    # Generate plot
-    fig = Figure()
-    axis = fig.add_subplot(1, 1, 1)
-    axis.set_title("title")
-    axis.set_xlabel("x-axis")
-    axis.set_ylabel("y-axis")
-    axis.grid()
-    axis.plot(range(5), range(5), "ro-")
+    print(studys)
 
-    # Convert plot to PNG image
-    pngImage = io.BytesIO()
-    FigureCanvas(fig).print_png(pngImage)
-
-    # Encode PNG image to base64 string
-    pngImageB64String = "data:image/png;base64,"
-    pngImageB64String += base64.b64encode(pngImage.getvalue()).decode("utf8")
-
-    return render_template("image.html", image=pngImageB64String)
+    return render_template("test.html", studys=studys)
 
 
 def get_db_connection():
@@ -84,7 +87,9 @@ def list_conditions(conn):
 
 def get_distinct_values(conn, condition):
     # get the distinct enteries for inputed condition. Values returned not rows
-    values = conn.execute("SELECT DISTINCT %s FROM conditions;" % condition).fetchall()
+    values = conn.execute(
+        "SELECT DISTINCT %s FROM conditions WHERE trips_id > 0;" % condition
+    ).fetchall()
     return [row[0] for row in values]
 
 
@@ -118,30 +123,53 @@ def sort_condition_keys(condition_info):
 def format_conditions(conn, conditions):
     # This function prepares db info for display in index.html
     formatted = {}
+    before_after = {}
     for condition in conditions:
         # format the codition title in upper case and removing _
         # j = str.title(condition).replace("_", " ")
         values = get_distinct_values(conn, condition)
+
+        before_after[condition] = {}
+
         include_none = False
 
         if condition == "elongating" or condition == "initiating":
-            values = [condition if x == 1 else "Not " + condition for x in values]
+            for x in values:
+                if x == 1:
+                    before_after[condition][condition] = x
+                else:
+                    before_after[condition][f"Not {condition}"] = x
+
+            values = [
+                str.title(condition) if x == 1 else "Not " + str.title(condition)
+                for x in values
+            ]
+            formatted[condition] = sorted(values)
+            continue
+
         rename_dict = {
             "chx": "Cycloheximide",
             "ltm": "Lactimidomycin",
             "harr": "Harringtonine",
         }
-
         if None in values:
             # remove nones for sorting
             values = [p for p in values if p]
             include_none = True
 
         if condition == "treatment":
+            for value in values:
+                before_after[condition][rename_dict[value]] = value
+
             values = [rename_dict[value] for value in values]
+            formatted[condition] = sorted(values)
+            continue
 
         if condition not in ["sra_run", "study"]:
+            before_after[condition] = {str.title(value): value for value in values}
             values = [str.title(value) for value in values]
+        elif condition in ["sra_run", "study"]:
+            before_after[condition] = {value: value for value in values}
         try:
             values = [int(i) for i in values]
         except:
@@ -151,16 +179,62 @@ def format_conditions(conn, conditions):
         if include_none:
             # reintroduce nones
             formatted[condition].append(None)
-    return formatted
+
+    return formatted, before_after
 
 
-# To tidy up the output from the sqlite db.
+def parse_form_result(form_list, before_after, conditions):
+    input_dict = {condition: [] for condition in conditions}
 
-# Write function to tidy up condition names
-# - capitlaise
-# - remove hyphens for spaces
+    for item in form_list:
+        for condition in conditions:
+            if item in before_after[condition].keys():
+                input_dict[condition].append(before_after[condition][item])
+                print(before_after[condition][item])
 
-# Write function to tidy up values
-# - merge similars
-# - capitalise
-# - order numbers
+    return input_dict
+
+
+def construct_query_string(input_dict):
+    string = "SELECT trips_id FROM conditions WHERE "
+    number_added = 0
+    for title in input_dict:
+        if len(input_dict[title]) > 1:
+            title_string = title + " IN " + str(tuple(i for i in input_dict[title]))
+            string = string + title_string + " AND "
+            number_added += 1
+
+        elif len(input_dict[title]) == 1:
+            title_string = title + " == '" + str(input_dict[title][0])
+            string = string + title_string + "' AND "
+            number_added += 1
+
+        elif len(input_dict[title]) == 0:
+            continue
+    if number_added > 0:
+        return string[:-5] + ";"
+    else:
+        return string[:-7] + ";"
+
+
+def run_query(query, conn):
+    result = conn.execute(query).fetchall()
+    trips_ids = []
+    for row in result:
+        trips_ids.append(row["trips_id"])
+    return trips_ids
+
+
+def build_trips_url(trips_id):
+
+    if len(trips_id) > 0:
+        base_url = (
+            "https://trips.ucc.ie/hg19_sarscov2/wuhcor1_hg19/interactive_plot/?files="
+        )
+        for file in trips_id:
+            base_url += file + ","
+
+        tail_url = "&tran=NC_045512&minread=5&maxread=150&user_dir=fiveprime&ambig=F&cov=F&lg=T&nuc=F&rs=0&crd=F"
+        return base_url + tail_url
+    else:
+        return "Oops! Looks like your query returned no files!"

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<script type="text/javascript">
+    function dragStart(ev) {
+       ev.dataTransfer.effectAllowed='move';
+       ev.dataTransfer.setData("Text", ev.target.getAttribute('id'));
+       ev.dataTransfer.setDragImage(ev.target,0,0);
+       return true;
+    }
+    function dragEnter(ev) {
+       event.preventDefault();
+       return true;
+    }
+    function dragOver(ev) {
+       return false;
+    }
+    function dragDrop(ev) {
+       var src = ev.dataTransfer.getData("Text");
+       ev.target.appendChild(document.getElementById(src));
+       ev.stopPropagation();
+       return false;
+    }
+ </script>
+
+<h2>Select Files </h2>
+<div>Drag files to studies section</div>
+{% for study in studys %}
+<div id="{{ study }}" ondragenter="return dragEnter(event)" ondrop="return dragDrop(event)" ondragover="return dragOver(event)" style="overflow: auto; float: left; background-color: #a6a6a6; width:33%; height:400px; padding:10px;margin:10px;-moz-user-select:none;">
+    <p>{{ study }}</p>
+    <ul>
+      {% for file in studys[study] %}
+         <li id="{{ file }}" draggable="true" ondragstart="return dragStart(event)" style="list-style-type: none; margin: 5px; background-color: #FFF;  -moz-user-select:none; border: 1px solid black; border-radius: 3px;"> {{ file }}</li>
+      {% endfor %}
+
+    </ul>
+</div>
+{% endfor %}
+<div id="boxB" ondragenter="return dragEnter(event)" ondrop="return dragDrop(event)" ondragover="return dragOver(event)" style="float: left; background-color: #a6a6a6; width:33%; height:100%; padding:10px;margin:10px;-moz-user-select:none;">
+    <p>Condition 1</p>
+    <hr>
+
+</div>
+<div id="boxC" ondragenter="return dragEnter(event)" ondrop="return dragDrop(event)" ondragover="return dragOver(event)" style="float: left; background-color: #a6a6a6; width:33%; height:100%; padding:10px;margin:10px;-moz-user-select:none;">
+    <p>Condition 2</p>
+    <hr>
+
+
+</div>
+
+
+
+{% endblock %}

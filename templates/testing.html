@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<script type="text/javascript">
+    function dragStart(ev) {
+       ev.dataTransfer.effectAllowed='move';
+       ev.dataTransfer.setData("Text", ev.target.getAttribute('id'));
+       ev.dataTransfer.setDragImage(ev.target,0,0);
+       return true;
+    }
+    function dragEnter(ev) {
+       event.preventDefault();
+       return true;
+    }
+    function dragOver(ev) {
+       return false;
+    }
+    function dragDrop(ev) {
+       var src = ev.dataTransfer.getData("Text");
+       ev.target.appendChild(document.getElementById(src));
+       ev.stopPropagation();
+       return false;
+    }
+ </script>
+
+
+<h2>Select Files </h2>
+<div>Drag files to studies section</div>
+<div id="boxB" ondragenter="return dragEnter(event)" ondrop="return dragDrop(event)" ondragover="return dragOver(event)" style="background-color: #a6a6a6; width:150px; height:150px; padding:10px;margin:10px;-moz-user-select:none;">
+    <p>Unselected</p>
+    <ul style=" width:150px; height:150px;">
+        <li id="box1" draggable="true" ondragstart="return dragStart(event)" style="margin: 5px; background-color: #FFF; width:75px; -moz-user-select:none; border: 1px solid black; border-radius: 3px;">File 1</li>
+        <li id="box2" draggable="true" ondragstart="return dragStart(event)" style="margin: 5px; background-color: #FFF; width:75px; -moz-user-select:none; border: 1px solid black; border-radius: 3px;">File 2</li>
+        <li id="box3" draggable="true" ondragstart="return dragStart(event)" style="margin: 5px; background-color: #FFF; width:75px; -moz-user-select:none; border: 1px solid black; border-radius: 3px;">File 3</li>
+    </ul>
+</div>
+<div id="boxB" ondragenter="return dragEnter(event)" ondrop="return dragDrop(event)" ondragover="return dragOver(event)" style="background-color: #a6a6a6; width:150px; height:150px; padding:10px;margin:10px;-moz-user-select:none;">Condition 1</div>
+<div id="boxC" ondragenter="return dragEnter(event)" ondrop="return dragDrop(event)" ondragover="return dragOver(event)" style="background-color: #a6a6a6; width:150px; height:150px; padding:10px;margin:10px;-moz-user-select:none;">Condition 2</div>
+
+
+
+
+{% endblock %}

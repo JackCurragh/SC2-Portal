@@ -17,7 +17,10 @@ def get_gene_info(gene_id, sqlite_path_organism):
     gene_id = gene_id.upper()
     conn = sqlite3.connect(sqlite_path_organism)
     c = conn.cursor()
-    c.execute('SELECT transcript, exon_junctions, sequence FROM transcripts WHERE gene = (:gene);', {'gene': gene_id})
+    c.execute(
+        "SELECT transcript, exon_junctions, sequence FROM transcripts WHERE gene = (:gene);",
+        {"gene": gene_id},
+    )
     gene_info = c.fetchall()
     return gene_info
 
@@ -27,9 +30,10 @@ def get_genes_principal(gene_id, sqlite_path_organism):
     gene_id = gene_id.upper()
     conn = sqlite3.connect(sqlite_path_organism)
     c = conn.cursor()
-    c.execute('SELECT transcript FROM transcripts '
-    low, *_, high = sorted(color_lookup.values())
-              'WHERE gene = (:gene) AND principal = 1;', {'gene': gene_id})
+    c.execute(
+        "SELECT transcript FROM transcripts " "WHERE gene = (:gene) AND principal = 1;",
+        {"gene": gene_id},
+    )
     principal_transcript = c.fetchall()
     return principal_transcript[0][0]
 
@@ -49,8 +53,8 @@ def get_3prime_exon(junction_list, sequence):
     # this function slices the 3' exon sequence from the transcript sequence returning
     # both the exon sequence and the remaining sequence of the transcript
     cut_off = junction_list[-1]
-    exon = sequence[cut_off-1:]
-    seq_less_exon = sequence[:cut_off-1]
+    exon = sequence[cut_off - 1 :]
+    seq_less_exon = sequence[: cut_off - 1]
     return exon, seq_less_exon
 
 
@@ -59,7 +63,10 @@ def get_transcript_info(transcript_id, sqlite_path_organism):
     transcript_id = transcript_id.upper()
     conn = sqlite3.connect(sqlite_path_organism)
     c = conn.cursor()
-    c.execute('SELECT exon_junctions, sequence FROM transcripts WHERE transcript = (:trans);', {'trans': transcript_id})
+    c.execute(
+        "SELECT exon_junctions, sequence FROM transcripts WHERE transcript = (:trans);",
+        {"trans": transcript_id},
+    )
     transcript_info = c.fetchall()
     return transcript_info
 
@@ -77,7 +84,7 @@ def get_max_min_exon_genomic_positions(exon_info):
 
 
 def exons_of_transcript(transcript_id, sqlite_path_organism):
-    # For a given transcript return the exon sequences in a list in 5' to 3' direction 
+    # For a given transcript return the exon sequences in a list in 5' to 3' direction
     exon_lst = []
     trans_info = get_transcript_info(transcript_id, sqlite_path_organism)
     exon_junctions = trans_info[0][0].split(",")
@@ -96,12 +103,12 @@ def exons_of_transcript(transcript_id, sqlite_path_organism):
 
 def get_exon_coordinate_ranges(sequence, exons, junctions):
     # Return list of transcript coordinate ranges (start position, stop position).
-    end = len(sequence)-1
+    end = len(sequence) - 1
     junctions.append(end)
 
     ranges = []
     for i in range(len(exons)):
-        ranges.append((sequence.find(exons[i]), junctions[i]-1))
+        ranges.append((sequence.find(exons[i]), junctions[i] - 1))
     return ranges
 
 
@@ -110,8 +117,11 @@ def get_exon_info(gene, sqlite_path_organism, supported_transcripts, filter=True
     gene = gene.upper()
     conn = sqlite3.connect(sqlite_path_organism)
     c = conn.cursor()
-    c.execute('SELECT transcript, exon_start, exon_stop FROM exons WHERE transcript IN '
-              '(SELECT transcript FROM transcripts WHERE gene = (:gene));', {'gene': gene})
+    c.execute(
+        "SELECT transcript, exon_start, exon_stop FROM exons WHERE transcript IN "
+        "(SELECT transcript FROM transcripts WHERE gene = (:gene));",
+        {"gene": gene},
+    )
     exon_info = c.fetchall()
     if filter:
         supported_exon_info = []
@@ -123,19 +133,27 @@ def get_exon_info(gene, sqlite_path_organism, supported_transcripts, filter=True
     return exon_info
 
 
-def genomic_exon_coordinate_ranges(gene, sqlite_path_organism, supported_transcripts, filter=True):
+def genomic_exon_coordinate_ranges(
+    gene, sqlite_path_organism, supported_transcripts, filter=True
+):
     # create a dictionary with transcript_ids as keys and exon coordinates in tuple (start, stop) as values
     # subtract the minumum start codon position of any exon for the gene
 
-    exon_info = get_exon_info(gene, sqlite_path_organism, supported_transcripts, filter=filter)
+    exon_info = get_exon_info(
+        gene, sqlite_path_organism, supported_transcripts, filter=filter
+    )
     minimum, _ = get_max_min_exon_genomic_positions(exon_info)
     genomic_coordinates_per_transcript = {}
 
     for exon in exon_info:
         if exon[0] not in genomic_coordinates_per_transcript:
-            genomic_coordinates_per_transcript[exon[0]] = [(exon[1] - minimum, exon[2] - minimum)]
+            genomic_coordinates_per_transcript[exon[0]] = [
+                (exon[1] - minimum, exon[2] - minimum)
+            ]
         else:
-            genomic_coordinates_per_transcript[exon[0]].append((exon[1] - minimum, exon[2] - minimum))
+            genomic_coordinates_per_transcript[exon[0]].append(
+                (exon[1] - minimum, exon[2] - minimum)
+            )
 
     return genomic_coordinates_per_transcript
 
@@ -149,13 +167,17 @@ def get_reads_per_transcript_location(transcript_id, sqlite_path_reads):
     return infile[transcript_id]["unambig"]
 
 
-def get_reads_per_genomic_location_asite(gene, sqlite_path_reads, sqlite_path_organism, supported_transcripts, filter):
+def get_reads_per_genomic_location_asite(
+    gene, sqlite_path_reads, sqlite_path_organism, supported_transcripts, filter
+):
     # get the number of reads supporting each genomic position to be used in the display of support of the
     # supertranscript model. This function takes the reads mapped for each transcript of a gene and uses a combination
     # of genomic and transcriptomic ranges to translate each transcript position to a genomic one.
 
     gene_info = get_gene_info(gene, sqlite_path_organism)
-    genomic_exon_coordinates = genomic_exon_coordinate_ranges(gene, sqlite_path_organism, supported_transcripts, filter)
+    genomic_exon_coordinates = genomic_exon_coordinate_ranges(
+        gene, sqlite_path_organism, supported_transcripts, filter
+    )
     genomic_read_dictionary = {}
 
     for read_file in sqlite_path_reads:
@@ -175,34 +197,50 @@ def get_reads_per_genomic_location_asite(gene, sqlite_path_reads, sqlite_path_or
             exon_junctions = string_to_integer_list(transcript[1].split(","))
             sequence = transcript[2]
             exons = exons_of_transcript(transcript[0], sqlite_path_organism)
-            transcript_ranges = get_exon_coordinate_ranges(sequence, exons, exon_junctions)
+            transcript_ranges = get_exon_coordinate_ranges(
+                sequence, exons, exon_junctions
+            )
 
             for length in transcript_read_dictionary:
                 for location in transcript_read_dictionary[length]:
-                    position = location + infile["offsets"]["fiveprime"]["offsets"][length]
+                    position = (
+                        location + infile["offsets"]["fiveprime"]["offsets"][length]
+                    )
 
                     range_counter = 0
                     for exon in transcript_ranges:
                         if position in range(exon[0], exon[1]):
-                            difference_between_read_position_and_exon_asite = position - exon[0]
-                            genomic_asite = genomic_ranges[range_counter][0] + difference_between_read_position_and_exon_asite
+                            difference_between_read_position_and_exon_asite = (
+                                position - exon[0]
+                            )
+                            genomic_asite = (
+                                genomic_ranges[range_counter][0]
+                                + difference_between_read_position_and_exon_asite
+                            )
                             if genomic_asite not in genomic_read_dictionary:
-                                genomic_read_dictionary[genomic_asite] = transcript_read_dictionary[length][location]
+                                genomic_read_dictionary[
+                                    genomic_asite
+                                ] = transcript_read_dictionary[length][location]
                             else:
-                                genomic_read_dictionary[genomic_asite] += transcript_read_dictionary[length][location]
+                                genomic_read_dictionary[
+                                    genomic_asite
+                                ] += transcript_read_dictionary[length][location]
                         range_counter += 1
 
     return genomic_read_dictionary
 
 
-
-def get_reads_per_genomic_location_fiveprime(gene, sqlite_path_reads, sqlite_path_organism, supported_transcripts, filter):
+def get_reads_per_genomic_location_fiveprime(
+    gene, sqlite_path_reads, sqlite_path_organism, supported_transcripts, filter
+):
     # get the number of reads supporting each genomic position to be used in the display of support of the
     # supertranscript model. This function takes the reads mapped for each transcript of a gene and uses a combination
     # of genomic and transcriptomic ranges to translate each transcript position to a genomic one.
 
     gene_info = get_gene_info(gene, sqlite_path_organism)
-    genomic_exon_coordinates = genomic_exon_coordinate_ranges(gene, sqlite_path_organism, supported_transcripts, filter)
+    genomic_exon_coordinates = genomic_exon_coordinate_ranges(
+        gene, sqlite_path_organism, supported_transcripts, filter
+    )
     genomic_read_dictionary = {}
 
     for read_file in sqlite_path_reads:
@@ -221,7 +259,9 @@ def get_reads_per_genomic_location_fiveprime(gene, sqlite_path_reads, sqlite_pat
             exon_junctions = string_to_integer_list(transcript[1].split(","))
             sequence = transcript[2]
             exons = exons_of_transcript(transcript[0], sqlite_path_organism)
-            transcript_ranges = get_exon_coordinate_ranges(sequence, exons, exon_junctions)
+            transcript_ranges = get_exon_coordinate_ranges(
+                sequence, exons, exon_junctions
+            )
 
             for length in transcript_read_dictionary:
                 for position in transcript_read_dictionary[length]:
@@ -229,23 +269,36 @@ def get_reads_per_genomic_location_fiveprime(gene, sqlite_path_reads, sqlite_pat
                     range_counter = 0
                     for exon in transcript_ranges:
                         if position in range(exon[0], exon[1]):
-                            difference_between_read_position_and_exon_start = position - exon[0]
-                            genomic_start_pos = genomic_ranges[range_counter][0] + difference_between_read_position_and_exon_start
+                            difference_between_read_position_and_exon_start = (
+                                position - exon[0]
+                            )
+                            genomic_start_pos = (
+                                genomic_ranges[range_counter][0]
+                                + difference_between_read_position_and_exon_start
+                            )
                             if genomic_start_pos not in genomic_read_dictionary:
-                                genomic_read_dictionary[genomic_start_pos] = transcript_read_dictionary[length][position]
+                                genomic_read_dictionary[
+                                    genomic_start_pos
+                                ] = transcript_read_dictionary[length][position]
                             else:
-                                genomic_read_dictionary[genomic_start_pos] += transcript_read_dictionary[length][position]
+                                genomic_read_dictionary[
+                                    genomic_start_pos
+                                ] += transcript_read_dictionary[length][position]
                         range_counter += 1
     return genomic_read_dictionary
 
 
-def get_read_ranges_genomic_location(gene, sqlite_path_reads, sqlite_path_organism, supported_transcripts, filter):
+def get_read_ranges_genomic_location(
+    gene, sqlite_path_reads, sqlite_path_organism, supported_transcripts, filter
+):
     # get the number of reads supporting each genomic position to be used in the display of support of the
     # supertranscript model. This function takes the reads mapped for each transcript of a gene and uses a combination
     # of genomic and transcriptomic ranges to translate each transcript position to a genomic one.
 
     gene_info = get_gene_info(gene, sqlite_path_organism)
-    genomic_exon_coordinates = genomic_exon_coordinate_ranges(gene, sqlite_path_organism, supported_transcripts, filter)
+    genomic_exon_coordinates = genomic_exon_coordinate_ranges(
+        gene, sqlite_path_organism, supported_transcripts, filter
+    )
     genomic_read_dictionary = {}
 
     for read_file in sqlite_path_reads:
@@ -264,21 +317,35 @@ def get_read_ranges_genomic_location(gene, sqlite_path_reads, sqlite_path_organi
             exon_junctions = string_to_integer_list(transcript[1].split(","))
             sequence = transcript[2]
             exons = exons_of_transcript(transcript[0], sqlite_path_organism)
-            transcript_ranges = get_exon_coordinate_ranges(sequence, exons, exon_junctions)
+            transcript_ranges = get_exon_coordinate_ranges(
+                sequence, exons, exon_junctions
+            )
 
             for length in transcript_read_dictionary:
                 for position in transcript_read_dictionary[length]:
                     range_counter = 0
                     for exon in transcript_ranges:
                         if position in range(exon[0], exon[1]):
-                            difference_between_read_position_and_exon_start = position - exon[0]
-                            genomic_start_pos = genomic_ranges[range_counter][0] + difference_between_read_position_and_exon_start
-                            genomic_read_range = (genomic_start_pos, genomic_start_pos + length)
+                            difference_between_read_position_and_exon_start = (
+                                position - exon[0]
+                            )
+                            genomic_start_pos = (
+                                genomic_ranges[range_counter][0]
+                                + difference_between_read_position_and_exon_start
+                            )
+                            genomic_read_range = (
+                                genomic_start_pos,
+                                genomic_start_pos + length,
+                            )
 
                             if genomic_read_range not in genomic_read_dictionary:
-                                genomic_read_dictionary[genomic_read_range] = transcript_read_dictionary[length][position]
+                                genomic_read_dictionary[
+                                    genomic_read_range
+                                ] = transcript_read_dictionary[length][position]
                             else:
-                                genomic_read_dictionary[genomic_read_range] += transcript_read_dictionary[length][position]
+                                genomic_read_dictionary[
+                                    genomic_read_range
+                                ] += transcript_read_dictionary[length][position]
                         range_counter += 1
 
     return genomic_read_dictionary
@@ -292,7 +359,9 @@ def read_ranges_per_transcript(reads):
             range_dict[(position, position + length)] = reads[length][position]
 
 
-def get_exonjunction_pileup_for_transcript(transcript_id, sqlite_path_organism, sqlite_path_reads):
+def get_exonjunction_pileup_for_transcript(
+    transcript_id, sqlite_path_organism, sqlite_path_reads
+):
     # count the number of reads in the read file that span each exon-exon junction. for a given transcript
     # returns a dictionary with junctions as keys and counts as values d
     transcript_info = get_transcript_info(transcript_id, sqlite_path_organism)
@@ -313,7 +382,9 @@ def get_exonjunction_pileup_for_transcript(transcript_id, sqlite_path_organism, 
     return counts
 
 
-def get_exon_pileup_for_transcript(transcript_id, sqlite_path_organism, sqlite_path_reads):
+def get_exon_pileup_for_transcript(
+    transcript_id, sqlite_path_organism, sqlite_path_reads
+):
     # count the number of reads whos p site lies within the exon sequence for a given transcript
     # returns a dictionary with sequences as keys and counts as values
     transcript_info = get_transcript_info(transcript_id, sqlite_path_organism)
@@ -331,7 +402,7 @@ def get_exon_pileup_for_transcript(transcript_id, sqlite_path_organism, sqlite_p
         for exon in range(len(ranges)):
             for read_length in reads:
                 for position in reads[read_length]:
-                    if position in range(ranges[exon][0], ranges[exon][1]+1):
+                    if position in range(ranges[exon][0], ranges[exon][1] + 1):
                         if exons[exon] in counts:
                             counts[exons[exon]] += reads[read_length][position]
                         else:
@@ -349,7 +420,9 @@ def filter_unsupported_transcripts(gene, sqlite_path_organism, sqlite_path_reads
     supported = []
 
     for transcript in transcripts:
-        pileup = get_exon_pileup_for_transcript(transcript, sqlite_path_organism, sqlite_path_reads)
+        pileup = get_exon_pileup_for_transcript(
+            transcript, sqlite_path_organism, sqlite_path_reads
+        )
         support = True
 
         for exon in pileup:
@@ -395,6 +468,7 @@ def filter_unsupported_transcripts(gene, sqlite_path_organism, sqlite_path_reads
 #         #         exon_dict[exon_sequence] = trans_id
 #     return exon_dict
 
+
 def get_exon_sequences(gene, sqlite_path_organism, supported_transcripts, filter=True):
     # returns the exon sequences for all annotated exons of a gene.
     gene_info = get_gene_info(gene, sqlite_path_organism)
@@ -430,7 +504,9 @@ def get_exon_sequences(gene, sqlite_path_organism, supported_transcripts, filter
 def assign_exon_numbers(gene, sqlite_path_organism, supported_transcripts, filter=True):
     # For ease of reference each exon in the gene is given a unique integer ID
     #  retruns a dictionary with numbers as keys and sequence as values.
-    exons = get_exon_sequences(gene, sqlite_path_organism, supported_transcripts, filter)
+    exons = get_exon_sequences(
+        gene, sqlite_path_organism, supported_transcripts, filter
+    )
     counter = 1
     exon_dictionary = {}
     used_ids = []
@@ -442,7 +518,13 @@ def assign_exon_numbers(gene, sqlite_path_organism, supported_transcripts, filte
     return exon_dictionary
 
 
-def get_scores_per_exonjunction_for_gene(gene_name, sqlite_path_organism, sqlite_path_reads, supported_transcripts, filter=True):
+def get_scores_per_exonjunction_for_gene(
+    gene_name,
+    sqlite_path_organism,
+    sqlite_path_reads,
+    supported_transcripts,
+    filter=True,
+):
     # count the reads in the reads file whos p sites lite within the exon sequence
     # returns a dictionary with all unique exons in the gene as keys and counts as values
     gene_info = get_gene_info(gene_name, sqlite_path_organism)
@@ -455,15 +537,23 @@ def get_scores_per_exonjunction_for_gene(gene_name, sqlite_path_organism, sqlite
     pileup = {}
     for transcript in transcripts:
         if transcript in pileup:
-            pileup[transcript] += get_exonjunction_pileup_for_transcript(transcript, sqlite_path_organism,
-                                                                         sqlite_path_reads)
+            pileup[transcript] += get_exonjunction_pileup_for_transcript(
+                transcript, sqlite_path_organism, sqlite_path_reads
+            )
         else:
-            pileup[transcript] = get_exonjunction_pileup_for_transcript(transcript, sqlite_path_organism,
-                                                                        sqlite_path_reads)
+            pileup[transcript] = get_exonjunction_pileup_for_transcript(
+                transcript, sqlite_path_organism, sqlite_path_reads
+            )
     return pileup
 
 
-def get_scores_per_exon_for_gene(gene_name, sqlite_path_organism, sqlite_path_reads, supported_transcripts, filter=True):
+def get_scores_per_exon_for_gene(
+    gene_name,
+    sqlite_path_organism,
+    sqlite_path_reads,
+    supported_transcripts,
+    filter=True,
+):
     # count the reads in the reads file whos p sites lite within the exon sequence
     # returns a dictionary with all unique exons in the gene as keys and counts as values
     gene_info = get_gene_info(gene_name, sqlite_path_organism)
@@ -476,9 +566,13 @@ def get_scores_per_exon_for_gene(gene_name, sqlite_path_organism, sqlite_path_re
     pileup = {}
     for transcript in transcripts:
         if transcript in pileup:
-            pileup[transcript] += get_exon_pileup_for_transcript(transcript, sqlite_path_organism, sqlite_path_reads)
+            pileup[transcript] += get_exon_pileup_for_transcript(
+                transcript, sqlite_path_organism, sqlite_path_reads
+            )
         else:
-            pileup[transcript] = get_exon_pileup_for_transcript(transcript, sqlite_path_organism, sqlite_path_reads)
+            pileup[transcript] = get_exon_pileup_for_transcript(
+                transcript, sqlite_path_organism, sqlite_path_reads
+            )
 
     all_exons = {}
 
@@ -499,7 +593,14 @@ def get_scores_per_exon_for_gene(gene_name, sqlite_path_organism, sqlite_path_re
 # print("prime", prime)
 #
 
-def get_scores_for_gene(gene_name, sqlite_path_organism, sqlite_path_reads, supported_transcripts, filter=True):
+
+def get_scores_for_gene(
+    gene_name,
+    sqlite_path_organism,
+    sqlite_path_reads,
+    supported_transcripts,
+    filter=True,
+):
     # count the reads in the reads file whos p sites lite within the exon sequence
     # returns a dictionary with all unique exons in the gene as keys and counts as values
     gene_info = get_gene_info(gene_name, sqlite_path_organism)
@@ -513,15 +614,22 @@ def get_scores_for_gene(gene_name, sqlite_path_organism, sqlite_path_reads, supp
     junct_pileup = {}
     for transcript in transcripts:
         if transcript in exon_pileup:
-            exon_pileup[transcript] += get_exon_pileup_for_transcript(transcript, sqlite_path_organism, sqlite_path_reads)
+            exon_pileup[transcript] += get_exon_pileup_for_transcript(
+                transcript, sqlite_path_organism, sqlite_path_reads
+            )
         else:
-            exon_pileup[transcript] = get_exon_pileup_for_transcript(transcript, sqlite_path_organism, sqlite_path_reads)
+            exon_pileup[transcript] = get_exon_pileup_for_transcript(
+                transcript, sqlite_path_organism, sqlite_path_reads
+            )
 
         if transcript in junct_pileup:
-            junct_pileup[transcript] += get_exonjunction_pileup_for_transcript(transcript, sqlite_path_organism, sqlite_path_reads)
+            junct_pileup[transcript] += get_exonjunction_pileup_for_transcript(
+                transcript, sqlite_path_organism, sqlite_path_reads
+            )
         else:
-            junct_pileup[transcript] = get_exonjunction_pileup_for_transcript(transcript, sqlite_path_organism,
-                                                                               sqlite_path_reads)
+            junct_pileup[transcript] = get_exonjunction_pileup_for_transcript(
+                transcript, sqlite_path_organism, sqlite_path_reads
+            )
     all_exons = {}
 
     for transcript in exon_pileup:
@@ -531,7 +639,9 @@ def get_scores_for_gene(gene_name, sqlite_path_organism, sqlite_path_reads, supp
             else:
                 all_exons[exon] = exon_pileup[transcript][exon]
 
-    exon_dict = assign_exon_numbers(gene_name, sqlite_path_organism, supported_transcripts, filter)
+    exon_dict = assign_exon_numbers(
+        gene_name, sqlite_path_organism, supported_transcripts, filter
+    )
     scores_number = {}
     for i in all_exons:
         score_number = get_keys_by_value(exon_dict, i)[0]
@@ -554,12 +664,14 @@ def get_edges(gene_name, sqlite_path_organism, supported_transcripts, filter=Tru
     edges = []
     for transcript in transcripts:
         exon_lst = exons_of_transcript(transcript, sqlite_path_organism)
-        for i in range(len(exon_lst)-1):
-            edges.append((exon_lst[i], exon_lst[i+1]))
+        for i in range(len(exon_lst) - 1):
+            edges.append((exon_lst[i], exon_lst[i + 1]))
     return edges
 
 
-def get_edges_scores(gene_name, sqlite_path_organism, supported_transcripts, junction_pileup, filter=True):
+def get_edges_scores(
+    gene_name, sqlite_path_organism, supported_transcripts, junction_pileup, filter=True
+):
     # Exons that lead into eachother in a transcript are represented as directed edges in the graphs.
     # Each edge is represented as a tuple (out node, in_node). Function returns a list of edges
     gene_info = get_gene_info(gene_name, sqlite_path_organism)
@@ -577,15 +689,14 @@ def get_edges_scores(gene_name, sqlite_path_organism, supported_transcripts, jun
         edges = []
 
         exon_lst = exons_of_transcript(transcript, sqlite_path_organism)
-        for i in range(len(exon_lst)-1):
-            edges.append((exon_lst[i], exon_lst[i+1]))
+        for i in range(len(exon_lst) - 1):
+            edges.append((exon_lst[i], exon_lst[i + 1]))
 
         edge_junction = zip(edges, junct)
         for junction in edge_junction:
             edge_scores[junction[0]] = scores[junction[1]]
 
     return edge_scores
-
 
 
 def get_keys_by_value(dictionary, value):
@@ -598,10 +709,20 @@ def get_keys_by_value(dictionary, value):
     return keys
 
 
-def scores_per_exon_number(gene, sqlite_path_organism, sqlite_path_reads, supported_transcripts, filter=True):
+def scores_per_exon_number(
+    gene, sqlite_path_organism, sqlite_path_reads, supported_transcripts, filter=True
+):
     # converts the scores dictionary from sequences as keys to numbers as keys
-    scores = get_scores_per_exon_for_gene(gene, sqlite_path_organism, sqlite_path_reads, supported_transcripts, filter=filter)
-    exon_dict = assign_exon_numbers(gene, sqlite_path_organism, supported_transcripts, filter)
+    scores = get_scores_per_exon_for_gene(
+        gene,
+        sqlite_path_organism,
+        sqlite_path_reads,
+        supported_transcripts,
+        filter=filter,
+    )
+    exon_dict = assign_exon_numbers(
+        gene, sqlite_path_organism, supported_transcripts, filter
+    )
     scores_number = {}
     for i in scores:
         score_number = get_keys_by_value(exon_dict, i)[0]
@@ -616,22 +737,36 @@ def scores_per_exon_number(gene, sqlite_path_organism, sqlite_path_reads, suppor
 def get_edges_numbers(gene, sqlite_path_organism, supported_transcripts, filter=True):
     # converts the edges to use the number ids, Returns a list of tuples (out node, in node)
     edges = get_edges(gene, sqlite_path_organism, supported_transcripts, filter)
-    exon_dictionary = assign_exon_numbers(gene, sqlite_path_organism, supported_transcripts, filter)
+    exon_dictionary = assign_exon_numbers(
+        gene, sqlite_path_organism, supported_transcripts, filter
+    )
     number_edges = []
 
     for i in edges:
-        number_edge = (get_keys_by_value(exon_dictionary, i[0])[0], get_keys_by_value(exon_dictionary, i[1])[0])
+        number_edge = (
+            get_keys_by_value(exon_dictionary, i[0])[0],
+            get_keys_by_value(exon_dictionary, i[1])[0],
+        )
         number_edges.append(number_edge)
     return number_edges
 
 
-def get_edges_scores_numbers(gene, sqlite_path_organism, supported_transcripts, junction_pileup, filter=True):
+def get_edges_scores_numbers(
+    gene, sqlite_path_organism, supported_transcripts, junction_pileup, filter=True
+):
     # converts the edges scores to use the number ids, Returns a dictionary with tuples (out node, in node) as keys
-    edges_scores = get_edges_scores(gene, sqlite_path_organism, supported_transcripts, junction_pileup, filter=True)
-    exon_dictionary = assign_exon_numbers(gene, sqlite_path_organism, supported_transcripts, filter)
+    edges_scores = get_edges_scores(
+        gene, sqlite_path_organism, supported_transcripts, junction_pileup, filter=True
+    )
+    exon_dictionary = assign_exon_numbers(
+        gene, sqlite_path_organism, supported_transcripts, filter
+    )
     number_edge_scores = {}
     for i in edges_scores:
-        number_edge = (get_keys_by_value(exon_dictionary, i[0])[0], get_keys_by_value(exon_dictionary, i[1])[0])
+        number_edge = (
+            get_keys_by_value(exon_dictionary, i[0])[0],
+            get_keys_by_value(exon_dictionary, i[1])[0],
+        )
         number_edge_scores[number_edge] = edges_scores[i]
 
     return number_edge_scores
@@ -648,10 +783,16 @@ def get_path_starts(graph):
     return start_exons
 
 
-def principal_path_in_numbers(gene, sqlite_path_organism, supported_transcripts, filter):
+def principal_path_in_numbers(
+    gene, sqlite_path_organism, supported_transcripts, filter
+):
     # take the principal path in exons and return the same using number ids for inclusion in the graph
-    exons = exons_of_transcript(get_genes_principal(gene, sqlite_path_organism), sqlite_path_organism)
-    exon_dictionary = assign_exon_numbers(gene, sqlite_path_organism, supported_transcripts, filter)
+    exons = exons_of_transcript(
+        get_genes_principal(gene, sqlite_path_organism), sqlite_path_organism
+    )
+    exon_dictionary = assign_exon_numbers(
+        gene, sqlite_path_organism, supported_transcripts, filter
+    )
 
     number_path_of_principal = []
 
@@ -688,12 +829,16 @@ def get_exon_positions(exon_info, supported_transcripts, filter=True):
     return exon_positions
 
 
-def exon_positions_with_numbers(gene, sqlite_path_organism, supported_transcripts, filter=True):
+def exon_positions_with_numbers(
+    gene, sqlite_path_organism, supported_transcripts, filter=True
+):
     # returns a dictionary of exon numbers as designated with "assign_exon_numbers()"
     # values are start and stop positions (position start, start + length)
     exon_info = get_exon_info(gene, sqlite_path_organism, supported_transcripts, filter)
     exon_positions = get_exon_positions(exon_info, supported_transcripts, filter)
-    exon_dict = assign_exon_numbers(gene, sqlite_path_organism, supported_transcripts, filter)
+    exon_dict = assign_exon_numbers(
+        gene, sqlite_path_organism, supported_transcripts, filter
+    )
     min_start_position = get_max_min_exon_genomic_positions(exon_info)[0]
     positions_number = {}
 
@@ -704,9 +849,11 @@ def exon_positions_with_numbers(gene, sqlite_path_organism, supported_transcript
         if position_number not in positions_number:
             positions_number[position_number] = (position, position + len(i) - 1)
         else:
-            positions_number[position_number] = (max(position, positions_number[position_number][0]), 
-                                                 max(position, positions_number[position_number][0]) 
-                                                 + max(len(i) - 1, positions_number[position_number][1]))
+            positions_number[position_number] = (
+                max(position, positions_number[position_number][0]),
+                max(position, positions_number[position_number][0])
+                + max(len(i) - 1, positions_number[position_number][1]),
+            )
 
     return positions_number
 
@@ -728,7 +875,9 @@ def get_y_values(positions_number):
     for i in range(min_position, max_position):
         exons_in_range = 0
         for exon in positions_number:
-            if i in range(positions_number[exon][0]-100, positions_number[exon][1]+100):
+            if i in range(
+                positions_number[exon][0] - 100, positions_number[exon][1] + 100
+            ):
                 exons_in_range += 1
                 if exon not in number_x_y:
                     number_x_y[exon] = [positions_number[exon][0], exons_in_range]
@@ -749,11 +898,15 @@ def relabel_nodes_L_R(number_x_y):
     return relabel
 
 
-def get_transcript_modules(gene, sqlite_path_organism, supported_transcripts, filter=True):
+def get_transcript_modules(
+    gene, sqlite_path_organism, supported_transcripts, filter=True
+):
     # modules are either unique or shared regions across the set of transcripts.
     # the number of exons transcribed from each individual genomic loci is recorded
-    # a module is defined as a change in the number of exons transcribed from that region 
-    positions_number = exon_positions_with_numbers(gene, sqlite_path_organism, supported_transcripts, filter)
+    # a module is defined as a change in the number of exons transcribed from that region
+    positions_number = exon_positions_with_numbers(
+        gene, sqlite_path_organism, supported_transcripts, filter
+    )
     start_positions = []
     end_positions = []
     for i in positions_number:
@@ -791,8 +944,12 @@ def get_transcript_modules(gene, sqlite_path_organism, supported_transcripts, fi
     return modules
 
 
-def get_principal_modules(gene, sqlite_path_organism, modules, supported_transcripts, filter=True):
-    principal_path = principal_path_in_numbers(gene, sqlite_path_organism, supported_transcripts, filter)
+def get_principal_modules(
+    gene, sqlite_path_organism, modules, supported_transcripts, filter=True
+):
+    principal_path = principal_path_in_numbers(
+        gene, sqlite_path_organism, supported_transcripts, filter
+    )
     modules_in_principal = []
     for module in modules:
         for exon in modules[module][2]:
@@ -848,7 +1005,7 @@ def supertranscript_colors(scores):
 
     transformed_colors = []
     for i in colors:
-        transformed_colors.append(i/maximum)
+        transformed_colors.append(i / maximum)
     return transformed_colors
 
 
@@ -864,28 +1021,39 @@ def supertranscript_edgecolors(modules, principal_modules):
     return edgecolors
 
 
-def plot_supertranscript(gene, sqlite_path_organism, supported_transcripts, filter=True):
+def plot_supertranscript(
+    gene, sqlite_path_organism, supported_transcripts, filter=True
+):
     # plot the super transcript using a broken bar chart with each module touching. scores/colors not supported
 
-    modules = get_transcript_modules(gene, sqlite_path_organism, supported_transcripts, filter)
-    principal_modules = get_principal_modules(gene, sqlite_path_organism, supported_transcripts, filter)
+    modules = get_transcript_modules(
+        gene, sqlite_path_organism, supported_transcripts, filter
+    )
+    principal_modules = get_principal_modules(
+        gene, sqlite_path_organism, supported_transcripts, filter
+    )
     fig, ax = plt.subplots()
     positions = supertranscript_positions(modules)
     edgecolors = supertranscript_edgecolors(modules, principal_modules)
 
-    ax.broken_barh(positions, (0, 1), facecolors='blue', edgecolors=edgecolors)
+    ax.broken_barh(positions, (0, 1), facecolors="blue", edgecolors=edgecolors)
     ax.set_ylim(0, 15)
     ax.set_xlim(0, positions[-1][0] + positions[-1][1])
     plt.show()
 
 
-def plot_supertranscript_barh(gene, sqlite_path_organism, sqlite_path_reads, filter=True):
+def plot_supertranscript_barh(
+    gene, sqlite_path_organism, sqlite_path_reads, filter=True
+):
     # horizontal bar chart method of plotting a superTranscript. A modules support is
     # reflected in the color concentration.
-    supported_transcripts = filter_unsupported_transcripts(gene, sqlite_path_organism, sqlite_path_reads)
+    supported_transcripts = filter_unsupported_transcripts(
+        gene, sqlite_path_organism, sqlite_path_reads
+    )
     modules = get_transcript_modules(gene, sqlite_path_organism, supported_transcripts)
-    genomic_read_dictionary = get_reads_per_genomic_location(gene, sqlite_path_reads, sqlite_path_organism,
-                                                             supported_transcripts, filter)
+    genomic_read_dictionary = get_reads_per_genomic_location(
+        gene, sqlite_path_reads, sqlite_path_organism, supported_transcripts, filter
+    )
     scores = get_module_pileup(modules, genomic_read_dictionary)
     colors = supertranscript_colors(scores)
     widths, starts = supertranscript_widths_starts(modules)
@@ -893,40 +1061,46 @@ def plot_supertranscript_barh(gene, sqlite_path_organism, sqlite_path_reads, fil
     ax.invert_yaxis()
     ax.xaxis.set_visible(True)
     ax.yaxis.set_visible(False)
-    c = plt.get_cmap('Blues')(colors)
+    c = plt.get_cmap("Blues")(colors)
 
     principal_modules = get_principal_modules(gene, sqlite_path_organism)
     edgecolors = supertranscript_edgecolors(modules, principal_modules)
 
     ax.barh(1, widths, left=starts, height=0.5, edgecolor=edgecolors, color=c)
-    
+
     plt.show()
+
 
 def get_all_paths(graph):
     # function to princt out all valid paths through a graph. Which should be
     # all valid transcripts as per the provided annotations
-    for i in range(1, len(graph.nodes)+1):
-        print('source: ', i)
-        for j in range(1, len(graph.nodes)+1):
-            print('traget: ', j)
+    for i in range(1, len(graph.nodes) + 1):
+        print("source: ", i)
+        for j in range(1, len(graph.nodes) + 1):
+            print("traget: ", j)
             print(list(nx.all_simple_paths(graph, source=i, target=j)))
 
 
 def nx_plot_spring(gene, sqlite_path_organism, sqlite_path_reads, filter=filter):
     graph = nx.DiGraph()
-    edge_numbers = get_edges_numbers(gene, sqlite_path_organism, sqlite_path_reads, filter)
+    edge_numbers = get_edges_numbers(
+        gene, sqlite_path_organism, sqlite_path_reads, filter
+    )
     graph.add_edges_from(edge_numbers, length=1)
     handles = []
-    exon_dict = assign_exon_numbers(gene, sqlite_path_organism, sqlite_path_reads, filter)
+    exon_dict = assign_exon_numbers(
+        gene, sqlite_path_organism, sqlite_path_reads, filter
+    )
     number_of_exons = len(exon_dict.keys())
 
-    scores = scores_per_exon_number(gene, sqlite_path_organism, sqlite_path_reads, filter=filter)
-    for i in range(number_of_exons+1):
+    scores = scores_per_exon_number(
+        gene, sqlite_path_organism, sqlite_path_reads, filter=filter
+    )
+    for i in range(number_of_exons + 1):
         if i not in scores:
             scores[i] = 0
     for i in exon_dict:
-        handles.append(mpatches.Patch(label=str(i) + " : "
-                                      + ": " + exon_dict[i]))
+        handles.append(mpatches.Patch(label=str(i) + " : " + ": " + exon_dict[i]))
         # nx.draw_networkx_labels(graph, pos) # Including nodes allowing font changes
         # Causes errors with framing the plot.
     connected = list(nx.weakly_connected_components(graph))
@@ -951,12 +1125,15 @@ def nx_plot_spring(gene, sqlite_path_organism, sqlite_path_reads, filter=filter)
                 i_color_lookup[j] = color_lookup[j]
         subpos = nx.kamada_kawai_layout(subgraph)
         plt.subplot(gs[i])
-        nx.draw(subgraph, subpos,
-                node_shape='s',
-                nodelist=i_color_lookup,
-                node_size=150,
-                node_color=[mapper.to_rgba(i) for i in i_color_lookup.values()],
-                with_labels=True)
+        nx.draw(
+            subgraph,
+            subpos,
+            node_shape="s",
+            nodelist=i_color_lookup,
+            node_size=150,
+            node_color=[mapper.to_rgba(i) for i in i_color_lookup.values()],
+            with_labels=True,
+        )
 
     # G = nx.Graph()
     # plt.subplot(gs[len(connected)])
@@ -966,7 +1143,7 @@ def nx_plot_spring(gene, sqlite_path_organism, sqlite_path_reads, filter=filter)
     # plt.subplot(gs[len(connected)+2])
     # nx.draw(G)
     # plt.legend(loc = "lower left", prop= {"size": 4}, handles = handles)
-    title = 'Kamada Kawai Layout Network of ' + gene + ' Exons'
+    title = "Kamada Kawai Layout Network of " + gene + " Exons"
     plt.figtext(0.0, 0.95, title)
     plt.margins(x=0, y=2)
     plt.show()

@@ -1,21 +1,30 @@
 {% extends 'base.html' %}
-
 {% block content %}
     <h1>{% block title %} SARS-CoV-2 Ribosome Profiling Portal {% endblock %}</h1>
 
     <p> User Friendly Access Point for SARS-CoV-2 Ribo-Seq data on <a href='https://gwips.ucc.ie/cgi-bin/hgGateway'>GWIPS-Viz</a> and <a href="http://trips.ucc.ie/">TRIPS-Viz</a></p>
     <hr>
-
+ 
     <h2 id="about"> About </h2>
     <p> This paragraph will essentially be an introduction to the interest in translational regulation wrt to SARScov2</p>
 
     <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In eget augue justo. Nulla interdum cursus eros ac porttitor. Fusce cursus porta eros. Aliquam imperdiet, felis vel aliquet cursus, arcu velit tempor sapien, vel rhoncus sapien odio sed mauris. Donec luctus pharetra consequat. Fusce molestie metus sit amet neque sollicitudin, at eleifend lorem bibendum. Etiam ut turpis ligula. Ut vitae pulvinar felis. Nullam quis blandit magna, a dictum quam. Vivamus at tristique mauris. Nulla eget nibh augue. Aliquam consectetur urna nec ligula fermentum ullamcorper.</p>
 
-    <p>Pellentesque euismod dolor vitae nunc porttitor dictum. In enim velit, tempor sit amet sagittis nec, vestibulum tincidunt eros. Vivamus nec mauris sit amet ante condimentum vehicula in ut purus. Donec et mauris ultrices, congue nunc ac, pulvinar felis. Nullam id interdum mauris. Vestibulum sed euismod neque, et rutrum quam. Donec ullamcorper gravida tellus, in rhoncus augue vehicula sed. Aliquam tristique a odio a bibendum. Etiam quis tellus mattis, aliquet dui mattis, fermentum elit. In semper lorem non orci vehicula dictum. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nulla condimentum, diam eget iaculis eleifend, arcu purus pulvinar quam, nec faucibus diam felis et neque. Nulla at feugiat mauris, et vestibulum quam. Fusce eros quam, ultricies sed lacinia sodales, lobortis non justo. Donec quis ipsum nec odio aliquam pretium eu vel urna. Pellentesque accumsan sem vitae tellus efficitur, nec consequat diam accumsan. </p>
+    <h1>JBrowse View of SARS-CoV-2</h1>
+    <div style="width: 600px; margin: 0; padding: auto;">
+        <iframe
+            src="http://localhost:8082/?loc=NC_045512.2%3A1..27600&tracks=DNA%2CSARS-CoV-2GFF3&highlight="
+            style="border: 1px solid black"
+            width="1000"
+            height="300"
+        >
+        </iframe>
+    </div>
+    <div id="view_plot" class="wrapper"><button class="button" type="button" onclick="changebuttonlink(gwips_info)"  id="query"><b>View Plot</b></button></div>
 
     <hr>
 
-    <h2 id='studies'>Studies</h2>
+    <h1 id='studies'>Studies</h1>
 
     <div role="tabpanel">
 
@@ -53,7 +62,21 @@
     </div>
     <hr>
     <section id='filter'>
+        <h1> Filter Your Data and Visualise it on Trips-Viz</h1>
         <div id="accordion">
+            <p><a href="{{ url }}"><button style="background-color: #008CBA;; /* Green */
+                border: none;
+                color: white;
+                padding: 15px 32px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+                border-radius: 12px;
+                
+                ">Take me to TRIPS-Viz</button></a></p>
+
+            <form method="post">
             <div class="card">
                 <div class="card-header" id="headingOne">
                 <h5 class="mb-0">
@@ -61,6 +84,7 @@
                         Information on Filtering
                     </a>
                 </h5>
+
                 </div>
                 <div id="collapseOne" class="collapse show" data-parent="#accordion">
                 <div class="card-body">
@@ -74,29 +98,35 @@
 
                 <div class="card">
                 <div class="card-header" id="{{ 'collapse' ~ condition }}">
-                    <h5 class="mb-0">
+                    <h5 class="mb-0" style="display: inline-block;">
                     <a class="collapsed card-link" data-toggle="collapse" href="#{{ 'collapse' ~ condition }}">
                         {{ condition_info[condition]['alias'] }}
                     </a>
                     </h5>
+                    <div style="float: right">
+                        <input type="submit">
+                        <input type="reset" value="Clean Slate">
+                    </div>
                 </div>
-
+                
                 <div id="{{ 'collapse' ~ condition }}" class="collapse" data-parent="#accordion">
                     {% for value in conditions[condition]|sort(attribute=value) %}
+                            <div class="card-body">
+                                {% if condition_info[condition]['value_suffix'] and value   %}
+                                    <label><input type="checkbox" name = "hello" value="{{ value }}">   {{ value }}{{ condition_info[condition]['value_suffix']}}  </label>
+                                {% else %}
+                                    <label><input type="checkbox" name = "hello" value="{{ value }}">   {{ value }}   </label>
+                                {% endif %}
 
-                        <div class="card-body">
-                            {% if condition_info[condition]['value_suffix'] and value   %}
-                                <label><input type="checkbox" value="">   {{ value }}{{ condition_info[condition]['value_suffix']}}  </label>
-                            {% else %}
-                                <label><input type="checkbox" value="">   {{ value }}   </label>
-                            {% endif %}
-                        </div>
+                            </div>
                     {% endfor %}
                 </div>
                 </div>
 
             {% endfor %}
+        </form>
 
         </div>
     </section>
+ 
     {% endblock %}

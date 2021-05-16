@@ -23,7 +23,8 @@ CREATE TABLE conditions (
     elongating BIT,
     initiating BIT,
     study VARCHAR,
-    sars_vs_mock VARCHAR
+    sars_vs_mock VARCHAR, 
+    trips_id VARCHAR
 
 );
 

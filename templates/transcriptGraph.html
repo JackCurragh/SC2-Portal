@@ -1,0 +1,210 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<div id="plot_div" style="width: 100%; height: 100%"></div>
+
+<script type="text/javascript">
+
+
+var trace1 = {
+  x: [1],
+  y: [9],
+  text: ['filled polygon'],
+  mode: 'text'
+};
+
+var layout = {
+  title: 'Transcript Graph of SARS-CoV2 gRNA',
+  xaxis: {
+    range: [0, 30000],
+    visible: false
+  },
+  yaxis: {
+    range: [-5, 3],
+    visible: false
+
+  },
+
+  width: 750,
+  height: 500,
+  shapes: [
+
+        
+            {
+            type: 'path', 
+            path: ' M 0,0.8 L 0,1.0 L 266,1.0 L 266,0.8 L 0,0.8 Z', 
+            fillcolor: 'black',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 266,0.7 L 266,1.1 L 13483,1.1 L 13483,0.7 L 266,0.7 Z', 
+            fillcolor: 'green',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 13468,1.3 L 13468,1.7 L 21555,1.7 L 21555,1.3 L 13468,1.3 Z', 
+            fillcolor: 'blue',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 13483,0.8 L 13483,1.0 L 21563,1.0 L 21563,0.8 L 13483,0.8 Z', 
+            fillcolor: 'black',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 21563,0.7 L 21563,1.1 L 25384,1.1 L 25384,0.7 L 21563,0.7 Z', 
+            fillcolor: 'green',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 25384,0.8 L 25384,1.0 L 25393,1.0 L 25393,0.8 L 25384,0.8 Z', 
+            fillcolor: 'black',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 25393,0.7 L 25393,1.1 L 26220,1.1 L 26220,0.7 L 25393,0.7 Z', 
+            fillcolor: 'blue',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 26220,0.8 L 26220,1.0 L 26245,1.0 L 26245,0.8 L 26220,0.8 Z', 
+            fillcolor: 'black',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 26245,0.7 L 26245,1.1 L 26472,1.1 L 26472,0.7 L 26245,0.7 Z', 
+            fillcolor: 'blue',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 26472,0.8 L 26472,1.0 L 26523,1.0 L 26523,0.8 L 26472,0.8 Z', 
+            fillcolor: 'black',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 26523,0.7 L 26523,1.1 L 27191,1.1 L 27191,0.7 L 26523,0.7 Z', 
+            fillcolor: 'red',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 27191,0.8 L 27191,1.0 L 27202,1.0 L 27202,0.8 L 27191,0.8 Z', 
+            fillcolor: 'black',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 27202,0.7 L 27202,1.1 L 27387,1.1 L 27387,0.7 L 27202,0.7 Z', 
+            fillcolor: 'blue',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 27387,0.8 L 27387,1.0 L 27394,1.0 L 27394,0.8 L 27387,0.8 Z', 
+            fillcolor: 'black',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 27394,0.7 L 27394,1.1 L 27759,1.1 L 27759,0.7 L 27394,0.7 Z', 
+            fillcolor: 'blue',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 27756,1.3 L 27756,1.7 L 27887,1.7 L 27887,1.3 L 27756,1.3 Z', 
+            fillcolor: 'red',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 27759,0.8 L 27759,1.0 L 27894,1.0 L 27894,0.8 L 27759,0.8 Z', 
+            fillcolor: 'black',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 27894,0.7 L 27894,1.1 L 28259,1.1 L 28259,0.7 L 27894,0.7 Z', 
+            fillcolor: 'red',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 28259,0.8 L 28259,1.0 L 28274,1.0 L 28274,0.8 L 28259,0.8 Z', 
+            fillcolor: 'black',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 28274,0.7 L 28274,1.1 L 29533,1.1 L 29533,0.7 L 28274,0.7 Z', 
+            fillcolor: 'green',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 29533,0.8 L 29533,1.0 L 29558,1.0 L 29558,0.8 L 29533,0.8 Z', 
+            fillcolor: 'black',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 29674,0.8 L 29674,1.0 L 29903,1.0 L 29903,0.8 L 29674,0.8 Z', 
+            fillcolor: 'black',
+            line: {color: 'black'}
+            }, 
+
+            {
+            type: 'path', 
+            path: ' M 29558,0.7 L 29558,1.1 L 29674,1.1 L 29674,0.7 L 29558,0.7 Z', 
+            fillcolor: 'green',
+            line: {color: 'black'}
+            }, 
+  ]
+
+
+};
+var data = [trace1];
+
+    Plotly.newPlot("plot_div", data, layout);
+
+</script>
+
+
+
+{% endblock %}
+
+        
