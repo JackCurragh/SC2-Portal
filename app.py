@@ -53,7 +53,7 @@ def index():
 @app.route("/query", methods=["GET", "POST"])
 def query():
     shape_string = construct_graph_from_file(gtf_path, fasta_path)
-    return render_template("transcriptGraph.html", shapes=shape_string)
+    return render_template("query.html")
 
 
 @app.route("/test", methods=["GET", "POST"])
